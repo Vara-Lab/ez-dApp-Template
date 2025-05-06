@@ -3,11 +3,18 @@ import {
   AlertProvider as GearAlertProvider,
   AccountProvider as GearAccountProvider,
   ProviderProps,
+  useProgram,
 } from '@gear-js/react-hooks';
+import {
+  SignlessTransactionsProvider as SharedSignlessTransactionsProvider,
+  GaslessTransactionsProvider as SharedGaslessTransactionsProvider,
+  EzTransactionsProvider,
+} from 'gear-ez-transactions';
 import { Alert, alertStyles } from '@gear-js/vara-ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ComponentType } from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { Program as BattleProgram } from './lib';
 
 import { ADDRESS } from '@/consts';
 
@@ -36,6 +43,27 @@ const queryClient = new QueryClient({
   },
 });
 
+function GaslessTransactionsProvider({ children }: ProviderProps) {
+  return (
+    <SharedGaslessTransactionsProvider
+      programId={import.meta.env.VITE_PROGRAMID}
+      backendAddress={import.meta.env.VITE_BACKEND}
+      voucherLimit={18}>
+      {children}
+    </SharedGaslessTransactionsProvider>
+  );
+}
+
+function SignlessTransactionsProvider({ children }: ProviderProps) {
+  const { data: program } = useProgram({ library: BattleProgram, id: import.meta.env.VITE_PROGRAMID });
+
+  return (
+    <SharedSignlessTransactionsProvider programId={import.meta.env.VITE_PROGRAMID} program={program}>
+      {children}
+    </SharedSignlessTransactionsProvider>
+  );
+}
+
 function QueryProvider({ children }: ProviderProps) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
@@ -44,7 +72,16 @@ function AccountProvider({ children }: ProviderProps) {
   return <GearAccountProvider appName={appName}>{children}</GearAccountProvider>;
 }
 
-const providers = [BrowserRouter, AlertProvider, ApiProvider, AccountProvider, QueryProvider];
+const providers = [
+  BrowserRouter,
+  AlertProvider,
+  ApiProvider,
+  AccountProvider,
+  QueryProvider,
+  GaslessTransactionsProvider,
+  SignlessTransactionsProvider,
+  EzTransactionsProvider,
+];
 
 function withProviders(Component: ComponentType) {
   return () => providers.reduceRight((children, Provider) => <Provider>{children}</Provider>, <Component />);
