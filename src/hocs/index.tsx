@@ -57,12 +57,16 @@ function GaslessTransactionsProvider({ children }: ProviderProps) {
 function SignlessTransactionsProvider({ children }: ProviderProps) {
   const { data: program } = useProgram({ library: BattleProgram, id: import.meta.env.VITE_PROGRAMID });
 
+  if (!program) return null;
+
   return (
-    <SharedSignlessTransactionsProvider programId={import.meta.env.VITE_PROGRAMID} program={program}>
+    <SharedSignlessTransactionsProvider programId={import.meta.env.VITE_PROGRAMID} program={program}
+>
       {children}
     </SharedSignlessTransactionsProvider>
   );
 }
+
 
 function QueryProvider({ children }: ProviderProps) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
@@ -75,13 +79,14 @@ function AccountProvider({ children }: ProviderProps) {
 const providers = [
   BrowserRouter,
   AlertProvider,
-  ApiProvider,
-  AccountProvider,
+  ApiProvider,              
+  AccountProvider,         
   QueryProvider,
-  GaslessTransactionsProvider,
-  SignlessTransactionsProvider,
+  SignlessTransactionsProvider, 
+  GaslessTransactionsProvider,  
   EzTransactionsProvider,
 ];
+
 
 function withProviders(Component: ComponentType) {
   return () => providers.reduceRight((children, Provider) => <Provider>{children}</Provider>, <Component />);

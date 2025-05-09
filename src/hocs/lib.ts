@@ -1,4 +1,3 @@
-
 import { GearApi, decodeAddress } from '@gear-js/api';
 import { TypeRegistry } from '@polkadot/types';
 import { TransactionBuilder, getServiceNamePrefix, getFnNamePrefix, ZERO_ADDRESS } from 'sails-js';
@@ -71,10 +70,7 @@ export interface PlayerSettings {
   dodge: number;
 }
 
-export type State =
-  | { registration: null }
-  | { started: null }
-  | { gameIsOver: { winners: [ActorId, ActorId | null] } };
+export type State = { registration: null } | { started: null } | { gameIsOver: { winners: [ActorId, ActorId | null] } };
 
 export interface Pair {
   player_1: ActorId;
@@ -190,13 +186,26 @@ export class Program {
     this.registry = new TypeRegistry();
     this.registry.setKnownTypes({ types });
     this.registry.register(types);
+
+    const sessionInstance = new Session(this);
+    this.session = {
+      sessionForTheAccount: sessionInstance.sessionForTheAccount.bind(sessionInstance),
+      createSession: sessionInstance.createSession.bind(sessionInstance),
+      deleteSessionFromAccount: sessionInstance.deleteSessionFromAccount.bind(sessionInstance),
+      subscribeToSessionCreatedEvent: sessionInstance.subscribeToSessionCreatedEvent.bind(sessionInstance),
+      subscribeToSessionDeletedEvent: sessionInstance.subscribeToSessionDeletedEvent.bind(sessionInstance),
+    };
+
     this.battle = new Battle(this);
-    this.session = new Session(this);
   }
 
   public get programId(): `0x${string}` {
     if (!this._programId) throw new Error('Program ID is not set');
     return this._programId;
+  }
+
+  public sessionForTheAccount(account: ActorId): Promise<SessionData | null> {
+    return this.session.sessionForTheAccount(account);
   }
 
   newCtorFromCode(
@@ -217,7 +226,11 @@ export class Program {
     return builder;
   }
 
-  newCtorFromCodeId(codeId: `0x${string}`, config: UtilsConfig, session_config: SessionConfig): TransactionBuilder<null> {
+  newCtorFromCodeId(
+    codeId: `0x${string}`,
+    config: UtilsConfig,
+    session_config: SessionConfig,
+  ): TransactionBuilder<null> {
     const builder = new TransactionBuilder<null>(
       this.api,
       this.registry,
@@ -531,7 +544,7 @@ export class Battle {
   }
 
   public subscribeToPlayerRegisteredEvent(
-    callback: (data: { admin_id: ActorId; user_name: string; bid: number | string | bigint }) => void | Promise<void>
+    callback: (data: { admin_id: ActorId; user_name: string; bid: number | string | bigint }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -552,7 +565,7 @@ export class Battle {
   }
 
   public subscribeToRegisterCanceledEvent(
-    callback: (data: { player_id: ActorId }) => void | Promise<void>
+    callback: (data: { player_id: ActorId }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -570,7 +583,7 @@ export class Battle {
   }
 
   public subscribeToBattleCanceledEvent(
-    callback: (data: { game_id: ActorId }) => void | Promise<void>
+    callback: (data: { game_id: ActorId }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -608,7 +621,7 @@ export class Battle {
   }
 
   public subscribeToBattleFinishedEvent(
-    callback: (data: { winner: ActorId }) => void | Promise<void>
+    callback: (data: { winner: ActorId }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -626,7 +639,7 @@ export class Battle {
   }
 
   public subscribeToPairCheckedEvent(
-    callback: (data: { game_id: ActorId; pair_id: number; round: number }) => void | Promise<void>
+    callback: (data: { game_id: ActorId; pair_id: number; round: number }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -644,7 +657,7 @@ export class Battle {
   }
 
   public subscribeToFirstRoundCheckedEvent(
-    callback: (data: { game_id: ActorId; wave: number }) => void | Promise<void>
+    callback: (data: { game_id: ActorId; wave: number }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -682,7 +695,7 @@ export class Battle {
   }
 
   public subscribeToWarriorGeneratedEvent(
-    callback: (data: { address: ActorId }) => void | Promise<void>
+    callback: (data: { address: ActorId }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -700,7 +713,7 @@ export class Battle {
   }
 
   public subscribeToAdminAddedEvent(
-    callback: (data: { new_admin: ActorId }) => void | Promise<void>
+    callback: (data: { new_admin: ActorId }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -718,7 +731,7 @@ export class Battle {
   }
 
   public subscribeToConfigChangedEvent(
-    callback: (data: { config: UtilsConfig }) => void | Promise<void>
+    callback: (data: { config: UtilsConfig }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -746,7 +759,11 @@ export class Battle {
   }
 
   public subscribeToRoundActionEvent(
-    callback: (data: { round: number; player_1: [ActorId, Move, number]; player_2: [ActorId, Move, number] }) => void | Promise<void>
+    callback: (data: {
+      round: number;
+      player_1: [ActorId, Move, number];
+      player_2: [ActorId, Move, number];
+    }) => void | Promise<void>,
   ): Promise<() => void> {
     return this._program.api.gearEvents.subscribeToGearEvent('UserMessageSent', ({ data: { message } }) => {
       if (!message.source.eq(this._program.programId) || !message.destination.eq(ZERO_ADDRESS)) return;
@@ -760,10 +777,10 @@ export class Battle {
                 message.payload,
               )[2]
               .toJSON() as {
-                round: number;
-                player_1: [ActorId, Move, number];
-                player_2: [ActorId, Move, number];
-              },
+              round: number;
+              player_1: [ActorId, Move, number];
+              player_2: [ActorId, Move, number];
+            },
           ),
         ).catch(console.error);
       }
