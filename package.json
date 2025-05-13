@@ -13,7 +13,7 @@
     "@gear-js/api": "0.41.1",
     "@gear-js/react-hooks": "0.15.0",
     "@gear-js/ui": "^0.7.0",
-    "@gear-js/vara-ui": "0.1.1",
+    "@gear-js/vara-ui": "0.0.11",
     "@gear-js/wallet-connect": "^0.4.1",
     "@polkadot/api": "15.4.1",
     "@polkadot/extension-dapp": "^0.58.8",
