@@ -1,4 +1,3 @@
-import '@gear-js/vara-ui/dist/style-deprecated.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
